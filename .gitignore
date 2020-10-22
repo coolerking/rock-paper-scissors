@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+jurina_logs/
+logs/
+random_logs/
+prob_logs/
+.vscode/
