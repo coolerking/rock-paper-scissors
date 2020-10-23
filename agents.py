@@ -1,274 +1,154 @@
 # -*- coding: utf-8 -*-
+"""
+エージェントモジュール
+
+方策に従うプレイヤー以外は
+じゃんけん相手として使用する。
+
+(C) Tasuku Hori, 2020
+"""
 import random
 
-class RandomPlayer:
+class BasePlayer:
     """
-    乱数で手を決めるエージェント
+    じゃんけんプレイヤー基底クラス
     """
-    ROCK = 0
-    PAPER = 1
-    SCISSORS = 2
-    ALL_ACTION = [ROCK, PAPER, SCISSORS]
-    WIN = 1
-    DRAW = 0
-    LOSE = -1
-    ALL_RESULT = [WIN, DRAW, LOSE]
+    ROCK = 0        # グー
+    PAPER = 1       # パー
+    SCISSORS = 2    # チョキ
+    ALL_ACTION = [ROCK, PAPER, SCISSORS]    # 行動値域
 
-    def __init__(self, observation_length=100):
+    def next_action(self, observation):
         """
-        観測データ長を設定し、観測データを乱数で初期化する。
+        観測データを引数に次の行動を選択し返却する。
+        本クラスには実装がなく必ず例外を発生させる。
         引数：
-            observation_length  観測データ長
-        """
-        # 観測データ長
-        self.observation_length = observation_length
-        # 観測データ：過去の出した行動の履歴
-        # 初期状態がないのでランダムで履歴を作成
-        self.observation = []
-        for _ in range(self.observation_length):
-            self.observation.append(self.get_action())
-
-    def eval(self, my_action, target_action):
-        """
-        対戦結果を評価し、結果を返す。
-        引数：
-            my_action       選択した行動
-            target_action   ゲーム側が選択した行動
+            observation     観測データ
         戻り値：
-            結果            -1:負け、0:あいこ、1:勝ち
+            選択された行動
         """
-        # 自分の行動を履歴へ格納
-        self.observation = self.observation[-(self.observation_length - 1):]
-        self.observation.append(my_action)
-        
-        # じゃんけんの判定
-        if my_action == self.ROCK:
-            if target_action == self.ROCK:
-                return self.DRAW
-            elif target_action == self.PAPER:
-                return self.LOSE
-            else:
-                return self.WIN
-        elif my_action == self.PAPER:
-            if target_action == self.PAPER:
-                return self.DRAW
-            elif target_action == self.SCISSORS:
-                return self.LOSE
-            else:
-                return self.WIN
-        else:
-            if target_action == self.SCISSORS:
-                return self.DRAW
-            elif target_action == self.ROCK:
-                return self.LOSE
-            else:
-                return self.WIN
+        raise NotImplementedError('need to implement that returns next action')
 
-    def get_action(self):
+class RandomPlayer(BasePlayer):
+    """
+    乱数で手を決めるプレイヤー
+    """
+    def next_action(self, observation):
         """
-        プレイヤーの行動を返却する。
-        本メソッドはランダムに行動を選択するため、
-        サブクラスでオーバライドして行動の傾向を変更することができる。
+        ランダムに次の手を返却する。
+        引数の観測データは一切使用しない。
         引数：
-            なし
+            observation     観測データ
         戻り値：
-            行動    0:グー、2:ちょき、1:パー
+            選択された行動
         """
-        return random.randrange(max(self.ALL_ACTION))
-    
-    def pon(self, target_action):
-        """
-        じゃんけんを１回実行し結果を返却する。
-        引数：
-            target_action   自分が出した手
-        戻り値：
-            result      0:あいこ、1:勝ち、-1:負け
-            done        エピソード完
-            observation 観測
-        """
-        result = self.eval(self.get_action(), target_action)
-        done = (result != 0)
-        return result, done, self.observation
+        return random.randrange(len(self.ALL_ACTION))
 
-class PolicyPlayer(RandomPlayer):
+class ProbPlayer(BasePlayer):
     """
-    Stable Baselines モデルクラスを使って行動を選択する
-    エージェント
+    確率分布リストに従って次の手を決定するプレイヤー
     """
-    def __init__(self, model, observation_length=100):
+    def __init__(self, prob_list=[0.33, 0.33, 0.34]):
         """
-        観測データ長を設定し、観測データを乱数で初期化する。
-        方策モデルクラスをインスタンス変数へ格納する。
+        引数で渡された確率分布をもとにしきい値を計算し
+        インスタンス変数に格納する。
         引数：
-            model               モデルインスタンス（必須）
-            observation_length  観測データ長
+            prod_list   長さ3のリスト(float)
         戻り値：
             なし
         """
-        # 観測データ長
-        self.observation_length = observation_length
-        # 観測データ初期化のためにランダムに作成
-        self.observation = []
-        for _ in range(self.observation_length):
-            self.observation.append(random.randrange(max(self.ALL_ACTION)))
-        # モデルを配置
-        self.model = model
+        super().__init__()
+        self.threshold_rock = prob_list[0]/sum(prob_list)
+        self.threshold_paper = self.threshold_rock + prob_list[0]/sum(prob_list)
 
-    def get_action(self):
+    def next_action(self, observation):
         """
-        プレイヤーの行動を方策モデルを使って選択する。
+        確率分布に則って次の手を選択・返却する。
+        引数の観測データは一切使用しない。
         引数：
-            なし
+            observation     観測データ
         戻り値：
-            行動    0:グー、2:ちょき、1:パー
-        """
-        #print(self.observation)
-        return int(self.model.predict(self.observation)[0])
-
-class JurinaPlayer(RandomPlayer):
-    """
-    常にパーを出し続けるエージェント
-    """
-    def __init__(self, observation_length=100):
-        """
-        観測データ長を設定し、観測データを乱数で初期化する。
-        引数：
-            observation_length  観測データ長
-        """
-        super().__init__(observation_length=observation_length)
-
-    def get_action(self):
-        """
-        常にパーを行動選択する。
-        引数：
-            なし
-        戻り値：
-            行動    1:パー
-        """
-        return self.PAPER
-
-class ProbPlayer(RandomPlayer):
-    """
-    与えられた確率分布に従って次の手を出す
-    エージェント
-    """
-    def __init__(self, prob_list=[0.33, 0.33, 0.34], observation_length=100):
-        if len(prob_list) != len(self.ALL_ACTION):
-            raise ValueError(f'prob_list:({prob_list}) is not length = {len(self.ALL_ACTION)}')
-        # 各行動の確率を算出
-        self.prob_list = [
-            prob_list[0]/sum(prob_list),
-            prob_list[1]/sum(prob_list),
-            prob_list[2]/sum(prob_list),
-        ]
-        # 観測データを初期化
-        super().__init__(observation_length)
-
-    def get_action(self):
-        """
-        確率分布に従って次の行動（手）を決める。
-        引数：
-            なし
-        戻り値：
-            行動：  0:グー、2:ちょき、1:パー
+            選択された行動
         """
         value = random.uniform(0.0, 1.0)
-        if value < self.prob_list[0]:
+        if value < self.threshold_rock:
             return self.ROCK
-        elif value < self.prob_list[0] + self.prob_list[1]:
+        elif value < self.threshold_paper:
             return self.PAPER
         else:
             return self.SCISSORS
 
-def test_random_player():
+class JurinaPlayer(BasePlayer):
     """
-    RandomPlayerのテスト
+    常にパーを出し続けるプレイヤー
     """
-    player = RandomPlayer(observation_length=100)
-    print(player.__class__.__name__)
-    print(player.observation)
-    assert(len(player.observation)==100)
-    assert(player.eval(player.ROCK, player.ROCK) == player.DRAW)
-    assert(player.observation[-1]==player.ROCK)
-    assert(len(player.observation)==100)
-    assert(player.eval(player.PAPER, player.PAPER) == player.DRAW)
-    assert(player.observation[-1]==player.PAPER)
-    assert(len(player.observation)==100)
-    assert(player.eval(player.SCISSORS, player.SCISSORS) == player.DRAW)
-    assert(player.observation[-1]==player.SCISSORS)
-    assert(len(player.observation)==100)
-    assert(player.eval(player.ROCK, player.PAPER) == player.LOSE)
-    assert(player.eval(player.ROCK, player.SCISSORS) == player.WIN)
-    assert(player.eval(player.PAPER, player.ROCK) == player.WIN)
-    assert(player.eval(player.PAPER, player.SCISSORS) == player.LOSE)
-    assert(player.eval(player.SCISSORS, player.ROCK) == player.LOSE)
-    assert(player.eval(player.SCISSORS, player.PAPER) == player.WIN)
-    assert(len(player.observation)==100)
-    for _ in range(100):
-        assert(player.get_action() in player.ALL_ACTION)
-        result, done, obs = player.pon(player.ROCK)
-        assert(result in player.ALL_RESULT)
-        print(f'result:{result}, done:{done}, obs:{obs}')
+    def next_action(self, observation):
+        """
+        引数の観測データにかかわらず常にパーを選択・返却する。
+        引数：
+            observation     観測データ
+        戻り値：
+            選択された行動（パー）
+        """
+        return self.PAPER
 
-def test_jurina_player():
+class PolicyPlayer(BasePlayer):
     """
-    JurinaPlayerのテスト
+    Stable Baselines モデルクラスを使って行動を選択する
+    エージェント
     """
-    player = JurinaPlayer(observation_length=100)
-    print(player.__class__.__name__)
-    print(player.observation)
+    def __init__(self, model):
+        """
+        Stable Baselinesの提供する方策モデルクラスの
+        インスタンスを格納する。
+        引数：
+            model               PPOモデルインスタンス（必須）
+        戻り値：
+            なし
+        """
+        super().__init__()
+        self.model = model
+
+    def next_action(self, observation):
+        """
+        方策モデルへ観測データを渡し、次の手を返却する。
+        引数：
+            observation     観測データ
+        戻り値：
+            選択された行動
+        """
+        return int(self.model.predict(observation)[0])
+
+def test_base_player():
+    player = BasePlayer()
+    try:
+        player.next_action([])
+    except NotImplementedError:
+        return
+    assert(False)
+
+def test_random_player():
+    player = RandomPlayer()
     for _ in range(100):
-        assert(player.get_action() in player.ALL_ACTION)
-    result, done, _ = player.pon(player.ROCK)
-    assert(result == player.WIN)
-    assert(done)
-    print(f'result:{result}, done:{done}')
-    result, done, _ = player.pon(player.PAPER)
-    assert(result == player.DRAW)
-    assert(not done)
-    print(f'result:{result}, done:{done}')
-    result, done, _ = player.pon(player.SCISSORS)
-    assert(result == player.LOSE)
-    assert(done)
-    print(f'result:{result}, done:{done}')
+        assert(player.next_action([]) in BasePlayer.ALL_ACTION)
 
 def test_prob_player():
-    """
-    ProbPlayerのテスト
-    """
-    player = ProbPlayer(prob_list=[5.0, 80.0, 15.0], observation_length=100)
-    print(player.__class__.__name__)
-    print(player.observation)
-    assert(len(player.observation)==100)
-    assert(player.prob_list[0]== 0.05)
-    assert(player.prob_list[1]== 0.80)
-    assert(player.prob_list[2]== 0.15)
+    player = ProbPlayer()
     for _ in range(100):
-        result, done, _ = player.pon(player.ROCK)
-        print(f'result:{result}, done:{done}')
-        result, done, _ = player.pon(player.PAPER)
-        print(f'result:{result}, done:{done}')
-        result, done, _ = player.pon(player.SCISSORS)
-        print(f'result:{result}, done:{done}')
+        assert(player.next_action([]) in BasePlayer.ALL_ACTION)
+    player = ProbPlayer([3, 1, 10])
+    for _ in range(100):
+        assert(player.next_action([]) in BasePlayer.ALL_ACTION)
+
+def test_jurina_player():
+    player = JurinaPlayer()
+    for _ in range(100):
+        assert(player.next_action([]) == BasePlayer.PAPER)
 
 def test_policy_player():
-    """
-    PolicyPlayerのテスト
-    要rps_mlp_ppo.zip
-    """
-    try:
-        from stable_baselines3 import PPO
-    except:
-        from stable_baselines import PPO
-    model = PPO.load('rps_mlp_ppo_random')
-    player = PolicyPlayer(model=model, observation_length=100)
-    print(player.__class__.__name__)
-    print(player.observation)
-    assert(len(player.observation)==100)
-    for _ in range(1000):
-        result, done, obs = player.pon(player.SCISSORS)
-        assert(result in player.ALL_RESULT)
-        print(f'result:{result}, done:{done}, obs:{obs}')
+    PolicyPlayer(model=None)
+    # need more test
+    pass
 
 if __name__ == '__main__':
     """

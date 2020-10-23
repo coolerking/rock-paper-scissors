@@ -129,7 +129,8 @@ dmypy.json
 .pyre/
 
 jurina_logs/
-logs/
+logs*/
 random_logs/
 prob_logs/
 .vscode/
+*.zip

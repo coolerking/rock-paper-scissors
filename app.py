@@ -19,7 +19,7 @@ except:
     raise
 
 try:
-    from flask import Flask, jsonify, request
+    from flask import Flask, jsonify, request, render_template
 except:
     raise
 
@@ -32,17 +32,21 @@ except:
         raise
 
 try:
-    from agents import PolicyPlayer
+    from ppo import Mlp
 except:
     raise
 
-model_paths = ['rps_mlp_ppo_play', 'rps_mlp_ppo_jurina', 'rps_mlp_ppo_pd']
-model_path = model_paths[1]
+model_paths = [Mlp.PATH + '_random', Mlp.PATH + '_jurina', Mlp.PATH + '_prob']
+model_path = model_paths[0]
 model = PPO.load(model_path)
-player = PolicyPlayer(model=model)
+
 app = Flask(__name__)
 
-@app.route('/')
+@app.route('/', method=['GET'])
+def show_index():
+    return render_template('index.html', title='rock-paper-scissors', name=name)
+
+@app.route('/status', method=['GET'])
 def say_hello():
     """
     生死確認用レスポンス処理。
