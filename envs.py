@@ -15,7 +15,7 @@ class Playground(gym.Env):
     """
     じゃんけん対戦場をあらわす環境クラス
     """
-    metadata = {'render.modes': ['console', 'ansi']}    # render モード
+    metadata = {'render.modes': ['console', 'ansi', 'json']}    # render モード
 
     REWARD_WIN = 10.0   # 勝ち確定時報酬値
     REWARD_LOSE = -10.0 # 負け確定時報酬値
@@ -96,6 +96,7 @@ class Playground(gym.Env):
             my_action, enemy_action)
         done = Playground.eval_done(
             my_action, enemy_action)
+        self.info['total_reward'] = self.info['total_reward'] + reward 
         self.observation = Playground.update_observation(
             self.observation, my_action, enemy_action)
         return self.observation, reward, done, self.info
@@ -120,8 +121,28 @@ class Playground(gym.Env):
             return None
         elif mode == 'ansi':
             return msg
+        elif mode == 'json':
+            return {
+                'episode_no':   self.info['episode_no'],
+                'step_no':      self.info['step_no'],
+                'my_action':    self.observation[0][-1],
+                'enemy_action': self.observation[1][-1],
+                'done':         self.eval_done(self.observation[0][-1], self.observation[1][-1]),
+                'reward':       self.compute_reward(self.observation[0][-1], self.observation[1][-1]),
+                'total_reward': self.info['total_reward'],
+            }
         else:
             raise ValueError(f'mode={mode}: no match argument')
+
+    def set_model(self, model):
+        """
+        モデルを差し替える。
+        引数：
+            model       モデルインスタンス
+        戻り値：
+            なし
+        """
+        self.model = model
 
     @classmethod
     def compute_reward(cls, my_action, enemy_action):

@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/env python3
 """
-Execute REST listener sample
+Webアプリケーション「AI対戦じゃんけん」エントリポイントモジュール。
 
 Setup:
-    pip install docopt flask
+    pip install docopt flask stable-baselines3
 
 Usage:
     endpoint.py [--debug] [--model_path=<target_model_path>]
@@ -27,84 +27,132 @@ try:
     from stable_baselines3 import PPO
 except:
     try:
-        from stable_baselines3 import PPO
+        from stable_baselines import PPO
     except:
         raise
 
 try:
     from ppo import Mlp
+    from agents import PolicyPlayer
+    from envs import Playground
 except:
     raise
 
-model_paths = [Mlp.PATH + '_random', Mlp.PATH + '_jurina', Mlp.PATH + '_prob']
-model_path = model_paths[0]
-model = PPO.load(model_path)
+# 対戦相手および環境の準備
+model_path = Mlp.PATH + '_random'
+#model_path = Mlp.PATH + '_prb'
+#model_path = Mlp.PATH + '_jurina'
+env = Playground(PolicyPlayer(PPO.load(model_path)))
+obs = env.reset()
 
+# アプリケーションオブジェクト生成
 app = Flask(__name__)
 
-@app.route('/', method=['GET'])
-def show_index():
-    return render_template('index.html', title='rock-paper-scissors', name=name)
-
-@app.route('/status', method=['GET'])
-def say_hello():
+def predict(my_action):
     """
-    生死確認用レスポンス処理。
-    RESTサーバ側が認識している全W/FのリストをJSON形式で返却。
+    選択した行動によるじゃんけん結果を辞書型で取得する。
+    引数：
+        my_action   選択した行動
+    戻り値：
+        JSON文字列  結果
     """
-    msg = {
-        'model_path':               model_path,
-        'available_model_paths':    model_paths,
-        'copy_right':               'Tasuku Hori, 2020',
+    global obs
+    # 選択した行動の結果を取得
+    obs, reward, done, info = env.step(0)
+    if done:
+        env.reset()
+    return {
+        'my_action':    0,
+        'model_path':   model_path,
+        'reward':       reward,
+        'observation':  obs,
+        'done':         done,
+        'info':         info
     }
-    return jsonify(msg)
 
-@app.route('/reload/<target_model_path>', methods=['GET'])
-def reload(target_model_path=None):
+@app.route('/', methods=['GET'])
+def show_index():
     """
-    モデルの再ロード。
+    index.html を表示する。
+    引数：
+        なし
+    戻り値：
+        なし
     """
-    global model_path
-    if target_model_path is None:
-        target_model_path = model_path
-    new_model = PPO.load(target_model_path)
-    global model
-    model = new_model
-    global player
-    observation = player.observation
-    player = PolicyPlayer(model=model)
-    player.observation = observation
-    model_path = target_model_path
-    return jsonify({
-        'model_path':               model_path,
-        'available_model_paths':    model_paths,
-        'reloaded':                 (model==new_model),
-    })
+    # /template/index.html を表示
+    return render_template('index.html')
 
-@app.route('/pon/<my_action>', methods=['GET'])
-def predict(my_action=None):
+@app.route('/obs', methods=['GET'])
+def show_obs():
     """
-    AI関数を実行し、次のactionを返却。
+    観測データを取得する。
+    引数：
+        なし
+    戻り値：
+        JSON文字列  観測データ
     """
-    if my_action is None:
-        my_action = 0
-    result, done, obs = player.pon(my_action)
-    return jsonify({
-        'model_path':               model_path,
-        'result':                   result,
-        'observation':              obs,
-        'done':                     done
-    })
+    return jsonify(obs)
+
+@app.route('/pon/goo', methods=['POST'])
+def goo():
+    """
+    グーを出したときの結果を返却する。
+    引数：
+        なし
+    戻り値：
+        JSON文字列  結果
+    """
+    return jsonify(predict(0))
+
+@app.route('/pon/choki', methods=['POST'])
+def choki():
+    """
+    チョキを出したときの結果を返却する。
+    引数：
+        なし
+    戻り値：
+        JSON文字列  結果
+    """
+    return jsonify(predict(2))
+
+@app.route('/pon/paa', methods=['POST'])
+def paa(my_action=None):
+    """
+    パーを出したときの結果を返却する。
+    引数：
+        なし
+    戻り値：
+        JSON文字列  結果
+    """
+    return jsonify(predict(1))
+
+@app.route('/reload', methods=['POST'])
+def load_model():
+    """
+    モデルをリロードする
+    引数：
+        なし
+    戻り値：
+        JSON文字列  観測データ
+    """
+    env.set_model(PPO.load(Mlp.PATH + '_random'))
+    global obs
+    obs = env.reset()
+    return jsonify(obs)
 
 if __name__ == '__main__':
     """
-    起動時のオプション処理。
+    起動時のオプション処理を行い
+    Webアプリケーションを開始する。
+    引数：
+        なし
+    戻り値：
+        なし
     """
-    
     args = docopt(__doc__)
     debug = args['--debug']
     target_model_path = args['--model_path']
     if target_model_path is not None:
-        model = PPO.load(target_model_path)
         model_path = target_model_path
+        env = Playground(PolicyPlayer(PPO.load(model_path)))
     app.run(debug=debug)

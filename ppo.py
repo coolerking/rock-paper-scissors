@@ -11,7 +11,7 @@ try:
 except:
     sb3 = False # Stable Baselines3 使用不可
     try:
-        from stable_baselines3 import PPO
+        from stable_baselines import PPO
 
         class MlpLstm:
             """
