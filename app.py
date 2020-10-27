@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-#!/usr/bin/env python3
 """
 Webアプリケーション「AI対戦じゃんけん」エントリポイントモジュール。
+起動後、http://127.0.0.1:5000/ を開くとじゃんけん画面が表示される。
 
 Setup:
     pip install docopt flask stable-baselines3
 
 Usage:
-    endpoint.py [--debug] [--model_path=<target_model_path>]
+    python endpoint.py [--debug] [--model_path=<target_model_path>]
 
 Options:
     --debug                             set debug on flask
@@ -15,40 +15,24 @@ Options:
 """
 try:
     from docopt import docopt
-except:
-    raise
-
-try:
-    from flask import Flask, jsonify, request, render_template
-except:
-    raise
-
-try:
-    from stable_baselines3 import PPO
-except:
-    try:
-        from stable_baselines import PPO
-    except:
-        raise
-
-try:
+    from flask import Flask, jsonify, render_template, session
     from ppo import Mlp
-    from agents import PolicyPlayer
     from envs import Playground
 except:
     raise
 
-# 対戦相手および環境の準備
-model_path = Mlp.PATH + '_random'
-#model_path = Mlp.PATH + '_prb'
-#model_path = Mlp.PATH + '_jurina'
-env = Playground(PolicyPlayer(PPO.load(model_path)))
-obs = env.reset()
+# 方策のロード
+#model = Mlp.load_model('_random')
+#model = Mlp.load_model('_jurina')
+#model = Mlp.load_model('_prob')
+model = Mlp.load_model('_prob2')
 
 # アプリケーションオブジェクト生成
 app = Flask(__name__)
+# session 用シークレットキー
+app.secret_key='rock-paper-scissors'
 
-def predict(my_action):
+def predict(my_action, obs):
     """
     選択した行動によるじゃんけん結果を辞書型で取得する。
     引数：
@@ -56,18 +40,17 @@ def predict(my_action):
     戻り値：
         JSON文字列  結果
     """
-    global obs
-    # 選択した行動の結果を取得
-    obs, reward, done, info = env.step(0)
-    if done:
-        env.reset()
+    
+    enemy_action = int(model.predict(obs)[0])
+    obs = Playground.update_observation(obs, my_action, enemy_action)
+    done = Playground.eval_done(my_action, enemy_action)
+    reward = Playground.compute_reward(my_action, enemy_action)
     return {
-        'my_action':    0,
-        'model_path':   model_path,
+        'my_action':    my_action,
+        'model':        model.__class__.__name__,
         'reward':       reward,
         'observation':  obs,
         'done':         done,
-        'info':         info
     }
 
 @app.route('/', methods=['GET'])
@@ -79,19 +62,11 @@ def show_index():
     戻り値：
         なし
     """
+    # セッション上に初期化した観測データを格納
+    if 'obs' not in session:
+        session['obs'] = Playground.init_observation(history_length=100)
     # /template/index.html を表示
     return render_template('index.html')
-
-@app.route('/obs', methods=['GET'])
-def show_obs():
-    """
-    観測データを取得する。
-    引数：
-        なし
-    戻り値：
-        JSON文字列  観測データ
-    """
-    return jsonify(obs)
 
 @app.route('/pon/goo', methods=['POST'])
 def goo():
@@ -102,7 +77,11 @@ def goo():
     戻り値：
         JSON文字列  結果
     """
-    return jsonify(predict(0))
+    # 観測データを取得
+    if 'obs' not in session:
+        session['obs'] = Playground.init_observation(history_length=100)
+    obs = session['obs']
+    return jsonify(predict(0, obs))
 
 @app.route('/pon/choki', methods=['POST'])
 def choki():
@@ -113,10 +92,14 @@ def choki():
     戻り値：
         JSON文字列  結果
     """
-    return jsonify(predict(2))
+    # 観測データを取得
+    if 'obs' not in session:
+        session['obs'] = Playground.init_observation(history_length=100)
+    obs = session['obs']
+    return jsonify(predict(2, obs))
 
 @app.route('/pon/paa', methods=['POST'])
-def paa(my_action=None):
+def paa():
     """
     パーを出したときの結果を返却する。
     引数：
@@ -124,9 +107,13 @@ def paa(my_action=None):
     戻り値：
         JSON文字列  結果
     """
-    return jsonify(predict(1))
+    # 観測データを取得
+    if 'obs' not in session:
+        session['obs'] = Playground.init_observation(history_length=100)
+    obs = session['obs']
+    return jsonify(predict(1, obs))
 
-@app.route('/reload', methods=['POST'])
+@app.route('/reload', methods=['GET'])
 def load_model():
     """
     モデルをリロードする
@@ -135,10 +122,16 @@ def load_model():
     戻り値：
         JSON文字列  観測データ
     """
-    env.set_model(PPO.load(Mlp.PATH + '_random'))
-    global obs
-    obs = env.reset()
-    return jsonify(obs)
+    global model
+    old_model = model
+    new_model = Mlp.load_model('_random')
+    is_updated = (new_model != old_model)
+    model = new_model
+    return jsonify({
+        'old_model':    old_model.__class__.__name__,
+        'new_model':    new_model.__class__.__name__,
+        'is_updated':   is_updated,
+    })
 
 if __name__ == '__main__':
     """
@@ -154,5 +147,12 @@ if __name__ == '__main__':
     target_model_path = args['--model_path']
     if target_model_path is not None:
         model_path = target_model_path
-        env = Playground(PolicyPlayer(PPO.load(model_path)))
+        try:
+            from stable_baselines3 import PPO
+        except:
+            try:
+                from stable_baselines import PPO
+            except:
+                raise
+        model = PPO.load(model_path)
     app.run(debug=debug)

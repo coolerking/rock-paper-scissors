@@ -31,22 +31,28 @@
 
 停止はCtrl+C。
 
-### 実行
+### 評価
+
+学習済みモデルの平均報酬値を標準出力へ表示します。
+
+* python eval.py
+
+### Webアプリケーション実行
+
+じゃんけんAI対戦ができるWebアプリケーションを起動します。
 
 * `cd rock-paper-scissors`
 * `conda install flask`
 * `pip install docopt`
 * `python app.py`
 
-停止はCtrl+C。
-
-#### 疎通確認
+停止はCtrl+Cを押します。
 
 * ブラウザで `http://127.0.0.1:5000/` を開く
 
 #### モデルのリロード
 
-* ブラウザで `http://127.0.0.1:5000/` を開く
+* ブラウザで `http://127.0.0.1:5000/reload` を開く
 
 ## ライセンス
 

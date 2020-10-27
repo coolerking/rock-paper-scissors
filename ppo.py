@@ -39,15 +39,15 @@ except:
                     tensorboard_log=MlpLstm.LOGDIR)
 
             @staticmethod
-            def load_model():
+            def load_model(suffix=''):
                 """
                 モデルファイルをロードした学習済みモデルインスタンス (MlpLstmPolicy) を取得する。
                 引数：
-                    なし
+                    suffix      接尾文字列
                 戻り値：
                     PPOインスタンス（学習済み）
                 """
-                return PPO.load(MlpLstm.PATH)
+                return PPO.load(MlpLstm.PATH + suffix)
 
         class MlpLnLstm:
             """
@@ -75,15 +75,15 @@ except:
                     tensorboard_log=MlpLnLstm.LOGDIR)
 
             @staticmethod
-            def load_model():
+            def load_model(suffix=''):
                 """
                 モデルファイルをロードした学習済みモデルインスタンス (MlpLnLstmPolicy) を取得する。
                 引数：
-                    なし
+                    suffix      接尾文字列
                 戻り値：
                     PPOインスタンス（学習済み）
                 """
-                return PPO.load(MlpLnLstm.PATH)
+                return PPO.load(MlpLnLstm.PATH + suffix)
         class CnnLstm:
             """
             CNN特徴抽出でLSTMを使用して、Actor-Criticを実装した方策を使う
@@ -110,15 +110,15 @@ except:
                     tensorboard_log=CnnLstm.LOGDIR)
 
             @staticmethod
-            def load_model():
+            def load_model(suffix=''):
                 """
                 モデルファイルをロードした学習済みモデルインスタンス (CnnLstmPolicy) を取得する。
                 引数：
-                    なし
+                    suffix      接尾文字列
                 戻り値：
                     PPOインスタンス（学習済み）
                 """
-                return PPO.load(CnnLstm.PATH)
+                return PPO.load(CnnLstm.PATH + suffix)
 
         class CnnLnLstm:
             """
@@ -146,15 +146,15 @@ except:
                     tensorboard_log=CnnLnLstm.LOGDIR)
 
             @staticmethod
-            def load_model():
+            def load_model(suffix=''):
                 """
                 モデルファイルをロードした学習済みモデルインスタンス (CnnLnLstmPolicy) を取得する。
                 引数：
-                    なし
+                    suffix      接尾文字列
                 戻り値：
                     PPOインスタンス（学習済み）
                 """
-                return PPO.load(CnnLnLstm.PATH)
+                return PPO.load(CnnLnLstm.PATH + suffix)
 
         def test_new_model_for_sb():
             """
@@ -200,15 +200,15 @@ class Mlp:
             tensorboard_log=Mlp.LOGDIR)
 
     @staticmethod
-    def load_model():
+    def load_model(suffix=''):
         """
         モデルファイルをロードした学習済みモデルインスタンス (MlpPolicy) を取得する。
         引数：
-            なし
+            suffix      接尾文字列
         戻り値：
             PPOインスタンス（学習済み）
         """
-        return PPO.load(Mlp.PATH)
+        return PPO.load(Mlp.PATH + suffix)
 
 class Cnn:
     """
@@ -235,15 +235,15 @@ class Cnn:
             tensorboard_log=Cnn.LOGDIR)
 
     @staticmethod
-    def load_model():
+    def load_model(suffix=''):
         """
         モデルファイルをロードした学習済みモデルインスタンス (CnnPolicy) を取得する。
         引数：
-            なし
+            suffix      接尾文字列
         戻り値：
             PPOインスタンス（学習済み）
         """
-        return PPO.load(Cnn.PATH)
+        return PPO.load(Cnn.PATH + suffix)
 
 def test_new_model():
     """

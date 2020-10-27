@@ -61,6 +61,39 @@ def train_mlp(enemy_player, model_path):
     # 環境のクローズ
     env.close()
 
+def fine_tuning_mlp(enemy_player, new_model_path, org_model_path):
+    """
+    学習済みモデルに別の環境をセットしてファインチューニングを
+    実行する。
+    引数：
+        enemy_player        新たな敵プレイヤー
+        new_model_path      新規モデルファイルパス
+        org_model_path      学習済みモデルファイルパス
+    戻り値：
+        なし
+    """
+    # ログディレクトリの作成
+    os.makedirs(Mlp.LOGDIR, exist_ok=True)
+    # 環境の構築
+    env = Playground(enemy_player)
+    env = Monitor(env, Mlp.LOGDIR, allow_early_resets=True)
+    env = DummyVecEnv([lambda: env])
+
+    # 学習済みモデルのロード
+    model = PPO.load(org_model_path)
+
+    # 環境のセット
+    model.set_env(env)
+
+    # トレーニング実行
+    model.learn(total_timesteps=100000)
+
+    # 学習済みモデルの保存
+    model.save(new_model_path)
+
+    # 環境のクローズ
+    env.close()
+
 if __name__ == '__main__':
     """
     RandomPlayer, ProbPlayer, JurinaPlayer を敵として
@@ -81,6 +114,13 @@ if __name__ == '__main__':
 
     print('start training against jurina player')
     start_time = time.time()
-    train_mlp(ProbPlayer(prob_list=prob_list), Mlp.PATH + '_jurina')
+    train_mlp(JurinaPlayer(), Mlp.PATH + '_jurina')
     term = time.time() - start_time
     print(f'end training against jurina player: elapsed time = {term}sec.')
+
+    prob_list = [0.1, 0.5, 0.4]
+    print(f'start transfer training against prob player({prob_list})')
+    start_time = time.time()
+    fine_tuning_mlp(ProbPlayer(prob_list), Mlp.PATH + '_prob2', Mlp.PATH + '_random')
+    term = time.time() - start_time
+    print(f'end transfer training against prob player: elapsed time = {term}sec.')

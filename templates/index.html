@@ -58,6 +58,7 @@
                         data: {}
                     }).done((data) => {
                         console.log('[ajax:/pon/goo] returns ' + data.done);
+                        //obs = data.obs;
                         if (data.done) {
                             if (data.reward>0) {
                                 $('#result').attr('src', '/static/images/pose_win_girl.png');
@@ -85,6 +86,7 @@
                         data: {}
                     }).done((data) => {
                         console.log('[ajax:/pon/paa] returns ' + data.done);
+                        //obs = data.obs;
                         if (data.done) {
                             if (data.reward>0) {
                                 $('#result').attr('src', '/static/images/pose_win_girl.png');
@@ -112,6 +114,7 @@
                         data: {}
                     }).done((data) => {
                         console.log('[ajax:/pon/choki] returns ' + data.done);
+                        //obs = data.obs;
                         if (data.done) {
                             if (data.reward>0) {
                                 $('#result').attr('src', '/static/images/pose_win_girl.png');

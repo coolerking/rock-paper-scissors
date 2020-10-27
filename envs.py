@@ -144,8 +144,8 @@ class Playground(gym.Env):
         """
         self.model = model
 
-    @classmethod
-    def compute_reward(cls, my_action, enemy_action):
+    @staticmethod
+    def compute_reward(my_action, enemy_action):
         """
         報酬関数。
         自分の手、相手の手から報酬値を算出する。
@@ -157,25 +157,25 @@ class Playground(gym.Env):
         """
         if my_action == BasePlayer.ROCK:
             if enemy_action == BasePlayer.ROCK:
-                return cls.REWARD_DRAW
+                return Playground.REWARD_DRAW
             elif enemy_action == BasePlayer.PAPER:
-                return cls.REWARD_LOSE
+                return Playground.REWARD_LOSE
             else:
-                return cls.REWARD_WIN
+                return Playground.REWARD_WIN
         elif my_action == BasePlayer.PAPER:
             if enemy_action == BasePlayer.PAPER:
-                return cls.REWARD_DRAW
+                return Playground.REWARD_DRAW
             elif enemy_action == BasePlayer.SCISSORS:
-                return cls.REWARD_LOSE
+                return Playground.REWARD_LOSE
             else:
-                return cls.REWARD_WIN
+                return Playground.REWARD_WIN
         else:
             if enemy_action == BasePlayer.SCISSORS:
-                return cls.REWARD_DRAW
+                return Playground.REWARD_DRAW
             elif enemy_action == BasePlayer.ROCK:
-                return cls.REWARD_LOSE
+                return Playground.REWARD_LOSE
             else:
-                return cls.REWARD_WIN
+                return Playground.REWARD_WIN
 
     @staticmethod
     def eval_done(my_action, enemy_action):
