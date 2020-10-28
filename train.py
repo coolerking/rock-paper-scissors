@@ -99,13 +99,14 @@ if __name__ == '__main__':
     RandomPlayer, ProbPlayer, JurinaPlayer を敵として
     各々トレーニング実行する。
     """
+
     print('start training against random player')
     start_time = time.time()
     train_mlp(RandomPlayer(), Mlp.PATH + '_random')
     term = time.time() - start_time
     print(f'end training against random player: elapsed time = {term}sec.')
 
-    prob_list = [0.2, 0.1, 0.7]
+    prob_list = [0.33, 0.33, 0.34]
     print(f'start training against prob player({prob_list})')
     start_time = time.time()
     train_mlp(ProbPlayer(prob_list), Mlp.PATH + '_prob')

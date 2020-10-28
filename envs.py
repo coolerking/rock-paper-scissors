@@ -19,7 +19,7 @@ class Playground(gym.Env):
 
     REWARD_WIN = 10.0   # 勝ち確定時報酬値
     REWARD_LOSE = -10.0 # 負け確定時報酬値
-    REWARD_DRAW = 1.0   # あいこ時報酬値
+    REWARD_DRAW = 0.0   # あいこ時報酬値
 
     def __init__(self, enemy_player, max_steps=10, history_length=100):
         """
