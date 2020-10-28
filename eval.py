@@ -37,9 +37,11 @@ def test_ppo_mlp_random(steps=100, debug=True):
             episodes = info['episode_no']
             observation = env.reset()
     print('** ppo_mlp_random test')
-    #print(f'   enemy player {enemy_player.__class__.__name__}')
+    if debug:
+        print(f'   enemy player {enemy_player.__class__.__name__}')
     print(f'   ran {steps} steps, {time() - elapsed} sec')
-    #print(f'   {episodes} episodes done')
+    if debug:
+        print(f'   {episodes} episodes done')
     if len(revenue) <= 0:
         print(f'   no revenues')
     else:
@@ -73,15 +75,17 @@ def test_ppo_mlp_jurina(steps=100, debug=True):
             episodes = info['episode_no']
             observation = env.reset()
     print('** ppo_mlp_jurina test')
-    #print(f'   enemy player {enemy_player.__class__.__name__}')
+    if debug:
+        print(f'   enemy player {enemy_player.__class__.__name__}')
     print(f'   ran {steps} steps, {time() - elapsed} sec')
-    #print(f'   {episodes} episodes done')
+    if debug:
+        print(f'   {episodes} episodes done')
     if len(revenue) <= 0:
         print(f'   no revenues')
     else:
         print(f'   revenue average: {sum(revenue)/len(revenue)} per episodes')
 
-def test_ppo_mlp_prob(steps=100, debug=True):
+def test_ppo_mlp_prob(steps=100, prob_list=[0.33, 0.33, 0.34], debug=True):
     """
     ProbPlayerで学習した方策を使って対戦し平均報酬値を出力する。
     引数：
@@ -92,7 +96,7 @@ def test_ppo_mlp_prob(steps=100, debug=True):
     """
     model = Mlp.load_model('_prob')
     my_player = PolicyPlayer(model)
-    enemy_player = ProbPlayer(prob_list=[0.2, 0.1, 0.7])
+    enemy_player = ProbPlayer(prob_list=prob_list)
     env = Playground(enemy_player)
     
     observation = env.reset()
@@ -108,10 +112,12 @@ def test_ppo_mlp_prob(steps=100, debug=True):
             revenue.append(reward)
             episodes = info['episode_no']
             observation = env.reset()
-    print('** ppo_mlp_prob test: prob_list=[0.2, 0.1, 0.7]')
-    #print(f'   enemy player {enemy_player.__class__.__name__}')
+    print(f'** ppo_mlp_prob test: prob_list={prob_list}')
+    if debug:
+        print(f'   enemy player {enemy_player.__class__.__name__}')
     print(f'   ran {steps} steps, {time() - elapsed} sec')
-    #print(f'   {episodes} episodes done')
+    if debug:
+        print(f'   {episodes} episodes done')
     if len(revenue) <= 0:
         print(f'   no revenues')
     else:
