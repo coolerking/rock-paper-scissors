@@ -10,7 +10,7 @@
 
 ## インストール
 
-* Anaconda をインストール、`conda env` コマンドを使い実行用環境を構築、`conda activate`コマンドで環境に入る
+* [Anaconda](https://www.anaconda.com/products/individual) をインストール、`conda env` コマンドを使い実行用環境を構築、`conda activate`コマンドで環境に入る
 * `conda install pytorch torchvision cpuonly -c pytorch`
 * `pip install stable-baselines3[extra]`
 * `git clone https://github.com/coolerking/rock-paper-scissors.git`
@@ -57,5 +57,11 @@
 ## ライセンス
 
 * 本サンプルコードはMITライセンス準拠です。
+
+### 謝辞
+
+以下のサイトを
+
 * 画像イメージは [いらすとや](https://www.irasutoya.com) より引用しています。
-* Webアプリケーションは、サーバサイド側は flask/python3 、クライアントサイド側は jQuery を使用しています。
+* Webアプリケーション(クライアントサイド側)は [jQuery](https://jquery.com/) を使用しています。
+* Web画面上のボタンは、[CSSで作る！押したくなるボタンデザイン100（Web用）](https://saruwakakun.com/html-css/reference/buttons) より引用しています。
