@@ -7,7 +7,7 @@ Setup:
     pip install docopt flask stable-baselines3
 
 Usage:
-    python endpoint.py [--debug] [--model_path=<target_model_path>]
+    app.py [--debug] [--model_path=<target_model_path>]
 
 Options:
     --debug                             set debug on flask
