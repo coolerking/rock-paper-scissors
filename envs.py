@@ -72,7 +72,7 @@ class Playground(gym.Env):
             観測データ [ 自分の過去の行動リスト, 敵の過去の行動リスト ]
         """
         self.info['episode_no'] = self.info['episode_no'] + 1
-        self.info['step_no'] = 0
+        self.info['step_no'] = -1.0
         self.info['total_reward'] = 0.0
         return self.observation
 
