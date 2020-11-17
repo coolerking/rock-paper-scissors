@@ -40,7 +40,11 @@ def eval_ppo(env_player, path=PROP_PPO, steps=100, debug=True):
     # 処理時間計測
     elapsed = time()
     for _ in range(steps):
-        policy_action = int(model.predict(observation))
+        
+        policy_action = model.predict(observation)
+        if isinstance(policy_action, tuple):
+            policy_action = policy_action[0]
+        policy_action = int(policy_action)
         observation, reward, done, info = env.step(policy_action)
         if debug:
             env.render()

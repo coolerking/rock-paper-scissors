@@ -1,0 +1,488 @@
+Script started on Tue Nov 17 13:07:21 2020
+sh-4.4$ python eval.py
+*****************************
+
+*** steps=10, path=prob_ppo, player=Player
+
+** path:prob_ppo test
+
+   ran 10 steps, 0.009030818939208984 sec
+
+   revenue average: -4.285714285714286 per episodes
+
+*****************************
+
+*** steps=10, path=prob_ppo, player=ProbPlayer
+
+** path:prob_ppo test
+
+   ran 10 steps, 0.004995107650756836 sec
+
+   revenue average: -2.0 per episodes
+
+*****************************
+
+*** steps=10, path=prob_ppo, player=JurinaPlayer
+
+** path:prob_ppo test
+
+   ran 10 steps, 0.007998466491699219 sec
+
+   revenue average: -10.0 per episodes
+
+*****************************
+
+*** steps=10, path=prob_ppo, player=AIPlayer
+
+** path:prob_ppo test
+
+   ran 10 steps, 0.010997295379638672 sec
+
+   revenue average: 0.0 per episodes
+
+*****************************
+
+*** steps=10, path=pa_ppo, player=Player
+
+** path:pa_ppo test
+
+   ran 10 steps, 0.004995107650756836 sec
+
+   revenue average: -10.0 per episodes
+
+*****************************
+
+*** steps=10, path=pa_ppo, player=ProbPlayer
+
+** path:pa_ppo test
+
+   ran 10 steps, 0.0069942474365234375 sec
+
+   revenue average: -2.0 per episodes
+
+*****************************
+
+*** steps=10, path=pa_ppo, player=JurinaPlayer
+
+** path:pa_ppo test
+
+   ran 10 steps, 0.00600123405456543 sec
+
+   revenue average: -10.0 per episodes
+
+*****************************
+
+*** steps=10, path=pa_ppo, player=AIPlayer
+
+** path:pa_ppo test
+
+   ran 10 steps, 0.013994455337524414 sec
+
+   revenue average: -10.0 per episodes
+
+*****************************
+
+*** steps=10, path=policy_ppo, player=Player
+
+** path:policy_ppo test
+
+   ran 10 steps, 0.004994869232177734 sec
+
+   revenue average: 6.0 per episodes
+
+*****************************
+
+*** steps=10, path=policy_ppo, player=ProbPlayer
+
+** path:policy_ppo test
+
+   ran 10 steps, 0.005001544952392578 sec
+
+   revenue average: -6.666666666666667 per episodes
+
+*****************************
+
+*** steps=10, path=policy_ppo, player=JurinaPlayer
+
+** path:policy_ppo test
+
+   ran 10 steps, 0.0050051212310791016 sec
+
+   revenue average: -10.0 per episodes
+
+*****************************
+
+*** steps=10, path=policy_ppo, player=AIPlayer
+
+** path:policy_ppo test
+
+   ran 10 steps, 0.011000871658325195 sec
+
+   revenue average: 10.0 per episodes
+
+*****************************
+
+*** steps=100, path=prob_ppo, player=Player
+
+** path:prob_ppo test
+
+   ran 100 steps, 0.053003787994384766 sec
+
+   revenue average: -3.3333333333333335 per episodes
+
+*****************************
+
+*** steps=100, path=prob_ppo, player=ProbPlayer
+
+** path:prob_ppo test
+
+   ran 100 steps, 0.058992624282836914 sec
+
+   revenue average: -0.14084507042253522 per episodes
+
+*****************************
+
+*** steps=100, path=prob_ppo, player=JurinaPlayer
+
+** path:prob_ppo test
+
+   ran 100 steps, 0.07899999618530273 sec
+
+   revenue average: -10.0 per episodes
+
+*****************************
+
+*** steps=100, path=prob_ppo, player=AIPlayer
+
+** path:prob_ppo test
+
+   ran 100 steps, 0.11999297142028809 sec
+
+   revenue average: -2.0 per episodes
+
+*****************************
+
+*** steps=100, path=pa_ppo, player=Player
+
+** path:pa_ppo test
+
+   ran 100 steps, 0.06100344657897949 sec
+
+   revenue average: -10.0 per episodes
+
+*****************************
+
+*** steps=100, path=pa_ppo, player=ProbPlayer
+
+** path:pa_ppo test
+
+   ran 100 steps, 0.05399465560913086 sec
+
+   revenue average: 0.2857142857142857 per episodes
+
+*****************************
+
+*** steps=100, path=pa_ppo, player=JurinaPlayer
+
+** path:pa_ppo test
+
+   ran 100 steps, 0.05499911308288574 sec
+
+   revenue average: -10.0 per episodes
+
+*****************************
+
+*** steps=100, path=pa_ppo, player=AIPlayer
+
+** path:pa_ppo test
+
+   ran 100 steps, 0.11999249458312988 sec
+
+   revenue average: -10.0 per episodes
+
+*****************************
+
+*** steps=100, path=policy_ppo, player=Player
+
+** path:policy_ppo test
+
+   ran 100 steps, 0.05599689483642578 sec
+
+   revenue average: 6.444444444444445 per episodes
+
+*****************************
+
+*** steps=100, path=policy_ppo, player=ProbPlayer
+
+** path:policy_ppo test
+
+   ran 100 steps, 0.053000688552856445 sec
+
+   revenue average: -0.30303030303030304 per episodes
+
+*****************************
+
+*** steps=100, path=policy_ppo, player=JurinaPlayer
+
+** path:policy_ppo test
+
+   ran 100 steps, 0.051985979080200195 sec
+
+   revenue average: -10.0 per episodes
+
+*****************************
+
+*** steps=100, path=policy_ppo, player=AIPlayer
+
+** path:policy_ppo test
+
+   ran 100 steps, 0.1309986114501953 sec
+
+   revenue average: 8.153846153846153 per episodes
+
+*****************************
+
+*** steps=1000, path=prob_ppo, player=Player
+
+** path:prob_ppo test
+
+   ran 1000 steps, 0.5410006046295166 sec
+
+   revenue average: -3.3739837398373984 per episodes
+
+*****************************
+
+*** steps=1000, path=prob_ppo, player=ProbPlayer
+
+** path:prob_ppo test
+
+   ran 1000 steps, 0.5479986667633057 sec
+
+   revenue average: 0.0 per episodes
+
+*****************************
+
+*** steps=1000, path=prob_ppo, player=JurinaPlayer
+
+** path:prob_ppo test
+
+   ran 1000 steps, 0.5080516338348389 sec
+
+   revenue average: -10.0 per episodes
+
+*****************************
+
+*** steps=1000, path=prob_ppo, player=AIPlayer
+
+** path:prob_ppo test
+
+   ran 1000 steps, 0.9820027351379395 sec
+
+   revenue average: 2.5 per episodes
+
+*****************************
+
+*** steps=1000, path=pa_ppo, player=Player
+
+** path:pa_ppo test
+
+   ran 1000 steps, 0.4880080223083496 sec
+
+   revenue average: -10.0 per episodes
+
+*****************************
+
+*** steps=1000, path=pa_ppo, player=ProbPlayer
+
+** path:pa_ppo test
+
+   ran 1000 steps, 0.5240006446838379 sec
+
+   revenue average: -0.015267175572519083 per episodes
+
+*****************************
+
+*** steps=1000, path=pa_ppo, player=JurinaPlayer
+
+** path:pa_ppo test
+
+   ran 1000 steps, 0.5030348300933838 sec
+
+   revenue average: -10.0 per episodes
+
+*****************************
+
+*** steps=1000, path=pa_ppo, player=AIPlayer
+
+** path:pa_ppo test
+
+   ran 1000 steps, 1.1139795780181885 sec
+
+   revenue average: -10.0 per episodes
+
+*****************************
+
+*** steps=1000, path=policy_ppo, player=Player
+
+** path:policy_ppo test
+
+   ran 1000 steps, 0.527998685836792 sec
+
+   revenue average: 5.825426944971537 per episodes
+
+*****************************
+
+*** steps=1000, path=policy_ppo, player=ProbPlayer
+
+** path:policy_ppo test
+
+   ran 1000 steps, 0.5020349025726318 sec
+
+   revenue average: 0.3816793893129771 per episodes
+
+*****************************
+
+*** steps=1000, path=policy_ppo, player=JurinaPlayer
+
+** path:policy_ppo test
+
+   ran 1000 steps, 0.5340087413787842 sec
+
+   revenue average: -10.0 per episodes
+
+*****************************
+
+*** steps=1000, path=policy_ppo, player=AIPlayer
+
+** path:policy_ppo test
+
+   ran 1000 steps, 0.9780011177062988 sec
+
+   revenue average: 9.472693032015066 per episodes
+
+*****************************
+
+*** steps=10000, path=prob_ppo, player=Player
+
+** path:prob_ppo test
+
+   ran 10000 steps, 4.850999355316162 sec
+
+   revenue average: -3.0824659727782224 per episodes
+
+*****************************
+
+*** steps=10000, path=prob_ppo, player=ProbPlayer
+
+** path:prob_ppo test
+
+   ran 10000 steps, 5.062993049621582 sec
+
+   revenue average: 0.13333333333333333 per episodes
+
+*****************************
+
+*** steps=10000, path=prob_ppo, player=JurinaPlayer
+
+** path:prob_ppo test
+
+   ran 10000 steps, 5.732889413833618 sec
+
+   revenue average: -10.0 per episodes
+
+*****************************
+
+*** steps=10000, path=prob_ppo, player=AIPlayer
+
+** path:prob_ppo test
+
+   ran 10000 steps, 9.828999757766724 sec
+
+   revenue average: -1.3043478260869565 per episodes
+
+*****************************
+
+*** steps=10000, path=pa_ppo, player=Player
+
+** path:pa_ppo test
+
+   ran 10000 steps, 4.848997592926025 sec
+
+   revenue average: -10.0 per episodes
+
+*****************************
+
+*** steps=10000, path=pa_ppo, player=ProbPlayer
+
+** path:pa_ppo test
+
+   ran 10000 steps, 4.762001276016235 sec
+
+   revenue average: -0.054119061936259774 per episodes
+
+*****************************
+
+*** steps=10000, path=pa_ppo, player=JurinaPlayer
+
+** path:pa_ppo test
+
+   ran 10000 steps, 4.764999628067017 sec
+
+   revenue average: -10.0 per episodes
+
+*****************************
+
+*** steps=10000, path=pa_ppo, player=AIPlayer
+
+** path:pa_ppo test
+
+   ran 10000 steps, 9.455994606018066 sec
+
+   revenue average: -10.0 per episodes
+
+*****************************
+
+*** steps=10000, path=policy_ppo, player=Player
+
+** path:policy_ppo test
+
+   ran 10000 steps, 4.8739988803863525 sec
+
+   revenue average: 5.5082554207280685 per episodes
+
+*****************************
+
+*** steps=10000, path=policy_ppo, player=ProbPlayer
+
+** path:policy_ppo test
+
+   ran 10000 steps, 4.8690025806427 sec
+
+   revenue average: -0.2650673774618688 per episodes
+
+*****************************
+
+*** steps=10000, path=policy_ppo, player=JurinaPlayer
+
+** path:policy_ppo test
+
+   ran 10000 steps, 5.4760754108428955 sec
+
+   revenue average: -10.0 per episodes
+
+*****************************
+
+*** steps=10000, path=policy_ppo, player=AIPlayer
+
+** path:policy_ppo test
+
+   ran 10000 steps, 9.666074991226196 sec
+
+   revenue average: 9.777950915465524 per episodes
+
+*****************************
+
+sh-4.4$ exit
+exit
+
+Script done on Tue Nov 17 13:11:52 2020

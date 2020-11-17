@@ -38,7 +38,7 @@ def train_prob_ppo(path='prob_ppo'):
     # トレーニング実行
     elapsed = time.time()
     model.learn(total_timesteps=1000000)
-    print(f'elapse time: {time.time() - elapsed}msec')
+    print(f'elapse time: {time.time() - elapsed}sec')
 
     # 学習済みモデルの保存
     model.save(path)
@@ -66,7 +66,7 @@ def train_pa_ppo(path='pa_ppo'):
     # トレーニング実行
     elapsed = time.time()
     model.learn(total_timesteps=1000000)
-    print(f'elapse time: {time.time() - elapsed}msec')
+    print(f'elapse time: {time.time() - elapsed}sec')
 
     # 学習済みモデルの保存
     model.save(path)
@@ -90,10 +90,13 @@ def train_policy_ppo(path='policy_ppo', org_path='prob_ppo'):
     env = Monitor(env, LOGDIR, allow_early_resets=True)
     env = DummyVecEnv([lambda: env])
 
+    # モデルのセット
+    model.set_env(env)
+
     # トレーニング実行
     elapsed = time.time()
     model.learn(total_timesteps=1000000)
-    print(f'elapse time: {time.time() - elapsed}msec')
+    print(f'elapse time: {time.time() - elapsed}sec')
 
     # 学習済みモデルの保存
     model.save(path)

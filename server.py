@@ -147,6 +147,5 @@ if __name__ == '__main__':
     if target_model_path is not None:
         model_path = target_model_path
         model = PPO.load(model_path)
-        global PATH
         PATH = model_path
     app.run(debug=debug)

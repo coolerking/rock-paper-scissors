@@ -283,6 +283,21 @@ class ProbPlayer(Player):
         else:
             return 2    # チョキ
 
+class EnemyPlayer(ProbPlayer):
+    """
+    1/3の確率でグー・パー・チョキを選択するプレイヤー。
+    """
+    def __init__(self):
+        """
+        prob_list の要素がすべて1/3として親クラスの
+        コンストラクタを呼び出す。
+        引数：
+            なし
+        戻り値：
+            なし
+        """
+        super().__init__(prob_list=[1.0/3.0, 1.0/3.0, 1.0/3.0])
+
 class JurinaPlayer(Player):
     """
     常に同じ手を出すプレイヤー。
@@ -332,7 +347,7 @@ class AIPlayer(Player):
         戻り値：
             学習済みモデルが選択した行動
         """
-        return int(self.model.predict(observation))
+        return int(self.model.predict(observation)[0])
 
 # テスト
 
