@@ -7,25 +7,23 @@ Setup:
     pip install docopt flask stable-baselines3
 
 Usage:
-    app.py [--debug] [--model_path=<target_model_path>]
+    server.py [--debug] [--model_path=<target_model_path>]
 
 Options:
     --debug                             set debug on flask
     --model_path=<target_model_path>    set target model path
 """
-try:
-    from docopt import docopt
-    from flask import Flask, jsonify, render_template, session
-    from ppo import Mlp
-    from envs import Playground
-except:
-    raise
+from docopt import docopt
+from flask import Flask, jsonify, render_template, session
+from stable_baselines3 import PPO
+from envs import RockPaperScissorsEnv as env
 
 # 方策のロード
-#model = Mlp.load_model('_random')
-#model = Mlp.load_model('_jurina')
-#model = Mlp.load_model('_prob')
-model = Mlp.load_model('_prob2')
+PATH = 'prob_ppo' # 1/3の確率で手を出す環境相手に学習
+#PATH = 'pa_ppo' # つねにパーを出す環境相手に学習
+#PATH = 'policy_ppo' # prob_ppoを相手に学習
+model = PPO.load(PATH)
+
 
 # アプリケーションオブジェクト生成
 app = Flask(__name__)
@@ -40,11 +38,10 @@ def predict(my_action, obs):
     戻り値：
         JSON文字列  結果
     """
-    
     enemy_action = int(model.predict(obs)[0])
-    obs = Playground.update_observation(obs, my_action, enemy_action)
-    done = Playground.eval_done(my_action, enemy_action)
-    reward = Playground.compute_reward(my_action, enemy_action)
+    obs = env.update_observation(obs, my_action, enemy_action)
+    done = env.is_done(my_action, enemy_action)
+    reward = env.calc_reward(my_action, enemy_action)
     return {
         'my_action':    my_action,
         'model':        model.__class__.__name__,
@@ -64,7 +61,9 @@ def show_index():
     """
     # セッション上に初期化した観測データを格納
     if 'obs' not in session:
-        session['obs'] = Playground.init_observation(history_length=100)
+        # 観測初期化
+        obs = env.init_observation()
+        session['obs'] = obs
     # /template/index.html を表示
     return render_template('index.html')
 
@@ -79,7 +78,7 @@ def goo():
     """
     # 観測データを取得
     if 'obs' not in session:
-        session['obs'] = Playground.init_observation(history_length=100)
+        session['obs'] = env.init_observation()
     obs = session['obs']
     return jsonify(predict(0, obs))
 
@@ -94,7 +93,7 @@ def choki():
     """
     # 観測データを取得
     if 'obs' not in session:
-        session['obs'] = Playground.init_observation(history_length=100)
+        session['obs'] = env.init_observation()
     obs = session['obs']
     return jsonify(predict(2, obs))
 
@@ -109,7 +108,7 @@ def paa():
     """
     # 観測データを取得
     if 'obs' not in session:
-        session['obs'] = Playground.init_observation(history_length=100)
+        session['obs'] = env.init_observation()
     obs = session['obs']
     return jsonify(predict(1, obs))
 
@@ -124,7 +123,7 @@ def load_model():
     """
     global model
     old_model = model
-    new_model = Mlp.load_model('_random')
+    new_model = PPO.load(PATH)
     is_updated = (new_model != old_model)
     model = new_model
     return jsonify({
@@ -147,12 +146,7 @@ if __name__ == '__main__':
     target_model_path = args['--model_path']
     if target_model_path is not None:
         model_path = target_model_path
-        try:
-            from stable_baselines3 import PPO
-        except:
-            try:
-                from stable_baselines import PPO
-            except:
-                raise
         model = PPO.load(model_path)
+        global PATH
+        PATH = model_path
     app.run(debug=debug)

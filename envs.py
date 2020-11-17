@@ -4,102 +4,199 @@
 """
 import random
 import numpy as np
-try:
-    import gym
-    from gym import spaces
-    from agents import BasePlayer
-except:
-    raise
+import gym
+from gym import spaces
 
-class Playground(gym.Env):
+class RockPaperScissorsEnv(gym.Env):
     """
-    じゃんけん対戦場をあらわす環境クラス
+    OpenAI Gym 準拠のじゃんけん対戦環境クラス。
+    必要最小限の実装のみ。
     """
-    metadata = {'render.modes': ['console', 'ansi', 'json']}    # render モード
-
-    REWARD_WIN = 10.0   # 勝ち確定時報酬値
-    REWARD_LOSE = -10.0 # 負け確定時報酬値
-    REWARD_DRAW = 0.0   # あいこ時報酬値
-
-    def __init__(self, enemy_player, max_steps=10, history_length=100):
+    def __init__(self, player):
         """
-        対戦相手となるプレイヤー、あいこ上限回数を指定する。
-        観測データ空間、行動空間を定義する。
+        方策側の相手となる環境側プレイヤーを
+        インスタンス変数へ格納し、
+        行動空間・観測空間の定義を行い、
+        観測の初期化を行う。
         引数：
-            enemy_player        対戦相手となるPlayerインスタンス
-            max_steps           あいこ上限回数
-            history_length      履歴件数
+            player  環境側プレイヤーインスタンス
         戻り値：
             なし
         """
         super().__init__()
-        # 対戦相手となるプレイヤー
-        self.enemy_player = enemy_player
-        # あいこによる再ステップの上限
-        self.max_steps = max_steps
-        # 出した手履歴数
-        self.history_length = history_length
-
-        # 観測データ空間
-        # [ 自分の過去の行動リスト, 敵の過去の行動リスト ]
+        self.player = player
+        # 行動空間：0=グー、1=パー、2=チョキ
+        self.action_space = spaces.Discrete(2)
+        # 観測空間：過去100件分の[方策側行動, 環境側行動]
         self.observation_space = spaces.Box(
-            min(BasePlayer.ALL_ACTION), max(BasePlayer.ALL_ACTION),
-            (2, self.history_length,), dtype=np.float32)
-        # 観測データ初期化
-        self.observation = Playground.init_observation(self.history_length)
-
-        # 行動空間
-        # int型スカラー値（0:グー、1:パー、2:チョキ）
-        self.action_space = spaces.Discrete(len(BasePlayer.ALL_ACTION))
-
-        # その他情報
-        self.info = {
-            'env_id':       'RockPaperScissors-v0',                 # env id
-            'enemy_player': self.enemy_player.__class__.__name__,   # 対戦オブジェクトクラス名
-            'max_steps':    self.max_steps,                         # あいこによる再ステップの上限
-            'episode_no':   0,                                      # 現在のエピソード
-            'step_no':      0,                                      # 現在のステップ
-            'total_reward': 0.0,                                    # エピソード内報酬合計
-        }
+            low=0, high=2, shape=(100, 2), dtype=np.int8)
+        # 観測初期化
+        self.observation = self.init_observation()
 
     def reset(self):
         """
-        エピソード開始時点にリセットする。
-        エピソード番号を+1、ステップ番号を0にする。
+        エピソード開始時の観測を取得する。
+        インスタンス変数observationの値をそのまま返却する。
         引数：
             なし
         戻り値：
-            観測データ [ 自分の過去の行動リスト, 敵の過去の行動リスト ]
+            観測 [ 自分の行動, 敵の行動 ]×100
         """
-        self.info['episode_no'] = self.info['episode_no'] + 1
-        self.info['step_no'] = -1.0
-        self.info['total_reward'] = 0.0
         return self.observation
 
     def step(self, action):
         """
-        方策が選択した行動を受け取り、環境の状態（観測データ）を更新する。
-        ステップ番号を+1加算する。
+        方策が選択した行動を受け取り、更新後の観測、報酬、
+        エピソード完、その他情報(空の辞書)を返却する。
         引数：
             action      自分の行動
         戻り値：
-            observation 観測データ
+            observation 更新後の観測
             reward      報酬値
             done        エピソード完（真：完了、偽：あいこ）
-            info        その他情報
+            info        その他情報（空の辞書）
         """
+        policy_action = int(action)
+        env_action = int(self.player.predict(self.observation))
+        self.observation = self.update_observation(
+            self.observation, policy_action, env_action)
+        reward = self.calc_reward(policy_action, env_action)
+        done = self.is_done(policy_action, env_action)
+        return self.observation, reward, done, {}
+
+    @staticmethod
+    def init_observation():
+        """
+        エピソード開始時の観測を取得する。
+        引数：
+            なし
+        戻り値：
+            observation 観測（初期値）
+        """
+        # 観測初期化
+        observation = []
+        for _ in range(100):
+            #　乱数で初期化
+            observation.append([
+                random.randrange(2), 
+                random.randrange(2)])
+        return observation
+
+    @staticmethod
+    def update_observation(observation, policy_action, env_action):
+        """
+        観測の先頭（最古の両者の手）を削除し、末尾に最新の両者の手を追加して
+        返却する。
+        引数：
+            observation         更新対象となる観測
+            policy_action       方策側の行動
+            env_action          環境側の行動
+        戻り値：
+            observation         更新後の観測
+        """
+        observation.pop(0)
+        observation.append([policy_action, env_action])
+        return observation
+
+    @staticmethod
+    def is_done(policy_action, env_action):
+        """
+        エピソード完了かどうかを判別する。
+        引数：
+            policy_action   方策側の行動
+            env_action      環境側の行動
+        戻り値：
+            done            エピソード完（真：完了、偽：あいこ）
+        """
+        return False if policy_action == env_action else True
+
+    @staticmethod
+    def calc_reward(policy_action, env_action):
+        """
+        報酬関数。
+        方策側の行動、環境側の行動から報酬値を算出する。
+        引数：
+            policy_action   方策側の行動
+            env_action      環境側の行動
+        戻り値：
+            方策側が受け取る報酬値(float)
+        """
+        if policy_action == 0:  # 方策側：グー
+            if env_action == 1:     # 環境側：パー
+                return -10
+            elif env_action == 2:   # 環境側：チョキ
+                return 10
+            else:                   # 環境側：グー
+                return -1
+        elif policy_action == 1: # 方策側：パー
+            if env_action == 1:     # 環境側：パー
+                return -1
+            elif env_action == 2:   # 環境側：チョキ
+                return -10
+            else:                   # 環境側：グー
+                return 10
+        else:                    #　方策側：チョキ
+            if env_action == 1:     # 環境側：パー
+                return 10
+            elif env_action == 2:   # 環境側：チョキ
+                return -1
+            else:                   # 環境側：グー
+                return -10
+
+class EvalEnv(RockPaperScissorsEnv):
+    """
+    じゃんけんAI用方策の評価用環境クラス。
+    """
+    # render モード
+    metadata = {'render.modes': ['console', 'ansi', 'json']}
+    def __init__(self, player):
+        """
+        インスタンス変数infoを初期化する。
+        引数：
+            player  環境側プレイヤーインスタンス
+        戻り値：
+            なし
+        """
+        super().__init__(player)
+        self.info = {
+            'env_id':       'RockPaperScissors-v0',         # env id
+            'enemy_player': self.player.__class__.__name__, # 対戦オブジェクトクラス名
+            'episode_no':   0,                              # 現在のエピソード
+            'step_no':      0,                              # 現在のステップ
+            'total_reward': 0.0,                            # エピソード内報酬合計
+        }
+
+    def reset(self):
+        """
+        エピソード開始時の観測を取得する。
+        インスタンス変数observationの値をそのまま返却する。
+        引数：
+            なし
+        戻り値：
+            観測 [ 自分の行動, 敵の行動 ]×100
+        """
+        self.info['episode_no'] = self.info['episode_no'] + 1
+        self.info['step_no'] = -1.0
+        self.info['total_reward'] = 0.0
+        return super().reset()
+
+    def step(self, action):
+        """
+        親クラスのstep()を実行し、infoとして実行中ステップ情報を
+        返却する
+        引数：
+            action      自分の行動
+        戻り値：
+            observation 更新後の観測
+            reward      報酬値
+            done        エピソード完（真：完了、偽：あいこ）
+            info        その他情報（ステップ情報）
+        """
+
+        observation, reward, done, _ = super().step(action)
         self.info['step_no'] = self.info.get('step_no', -1) + 1
-        my_action = action
-        enemy_action = self.enemy_player.next_action(
-            Playground.reverse_observation(self.observation))
-        reward = self.compute_reward(
-            my_action, enemy_action)
-        done = Playground.eval_done(
-            my_action, enemy_action)
         self.info['total_reward'] = self.info['total_reward'] + reward 
-        self.observation = Playground.update_observation(
-            self.observation, my_action, enemy_action)
-        return self.observation, reward, done, self.info
+        return observation, reward, done, self.info
 
     def render(self, mode='console'):
         """
@@ -112,9 +209,9 @@ class Playground(gym.Env):
         """
         msg = '+++ episode:{}, step:{}, '.format(
             str(self.info['episode_no']), str(self.info['step_no']))
-        last_obs = 'recent my action: ' + str(self.observation[0][-3]) + \
-            ',' + str(self.observation[0][-2]) + \
-            ',' + str(self.observation[0][-1]) 
+        last_obs = 'recent policy action: ' + str(self.observation[-3][0]) + \
+            ',' + str(self.observation[-2][0]) + \
+            ',' + str(self.observation[-1][0]) 
         msg = msg + last_obs
         if mode == 'console':
             print(msg)
@@ -123,148 +220,181 @@ class Playground(gym.Env):
             return msg
         elif mode == 'json':
             return {
-                'episode_no':   self.info['episode_no'],
-                'step_no':      self.info['step_no'],
-                'my_action':    self.observation[0][-1],
-                'enemy_action': self.observation[1][-1],
-                'done':         self.eval_done(self.observation[0][-1], self.observation[1][-1]),
-                'reward':       self.compute_reward(self.observation[0][-1], self.observation[1][-1]),
-                'total_reward': self.info['total_reward'],
+                'episode_no':       self.info['episode_no'],
+                'step_no':          self.info['step_no'],
+                'policy_action':    self.observation[-1][0],
+                'env_action':       self.observation[-1][1],
+                'done':             self.is_done(self.observation[-1][0], self.observation[-1][1]),
+                'reward':           self.calc_reward(self.observation[-1][0], self.observation[-1][1]),
+                'total_reward':     self.info['total_reward'],
             }
         else:
             raise ValueError(f'mode={mode}: no match argument')
 
-    def set_model(self, model):
+class Player:
+    """
+    プレイヤー基底クラス。
+    """
+    def predict(self, observation):
         """
-        モデルを差し替える。
+        引数observationをもとに次の行動を選択する。
+        本実装ではobservationを一切使用せずに、ランダムに行動を選択する。
         引数：
-            model       モデルインスタンス
+            observation     観測（使用しない）
+        戻り値：
+            ランダムに選択された行動
+        """
+        return random.randrange(2)
+
+class ProbPlayer(Player):
+    """
+    コンストラクタで渡された各手の確率に従ってランダムに手を出す
+    プレイヤークラス。
+    """
+    def __init__(self, prob_list=[0.333, 0.333, 0.334]):
+        """
+        各手の確率リストをインスタンス変数へ格納する。
+        引数：
+            prob_list   各手の確率
+        戻り値：
+            なし
+        """
+        self.prob_list = [
+            float(prob_list[0])/float(sum(prob_list)),
+            float(prob_list[1])/float(sum(prob_list)),
+            float(prob_list[2])/float(sum(prob_list)),
+        ]
+        
+    def predict(self, observation):
+        """
+        引数observationをもとに次の行動を選択する。
+        本実装ではobservationを一切使用せずに、
+        各手の確率に従ってランダムに行動を選択する。
+        引数：
+            observation     観測（使用しない）
+        戻り値：
+            各手の確率に従ってランダムに選択された行動
+        """
+        value = random.uniform(0.0, 1.0)
+        if value <= self.prob_list[0]:
+            return 0    # グー
+        elif value <= (self.prob_list[0] + self.prob_list[1]):
+            return 1    # パー
+        else:
+            return 2    # チョキ
+
+class JurinaPlayer(Player):
+    """
+    常に同じ手を出すプレイヤー。
+    """
+    def __init__(self, action=1):
+        """
+        常に出す手をインスタンス変数へ格納する。
+        引数：
+            action      常に出す手（デフォルト：パー）
+        """
+        self.action = action
+
+    def predict(self, observstion):
+        """
+        引数observationをもとに次の行動を選択する。
+        本実装ではobservationを一切使用せずに、
+        常に同じ行動を選択する。
+        引数：
+            observation     観測（使用しない）
+        戻り値：
+            コンストラクタで指定された行動
+        """
+        return self.action
+
+class AIPlayer(Player):
+    """
+    学習済みモデルを使って行動を決めるプレイヤー。
+    学習済みモデルと対戦評価する際に使用する。
+    """
+    def __init__(self, model):
+        """
+        学習済みモデルをコンストラクタに指定する。
+        引数：
+            model       学習済みモデルクラスのインスタンス
         戻り値：
             なし
         """
         self.model = model
-
-    @staticmethod
-    def compute_reward(my_action, enemy_action):
+    
+    def predict(self, observation):
         """
-        報酬関数。
-        自分の手、相手の手から報酬値を算出する。
+        引数observationをもとに次の行動を選択する。
+        本実装では学習済みモデルクラスのpredictメソッドを使って
+        行動を選択する。
         引数：
-            my_action       自分の行動
-            enemy_action    敵の行動
+            observation     観測
         戻り値：
-            報酬値(float)
+            学習済みモデルが選択した行動
         """
-        if my_action == BasePlayer.ROCK:
-            if enemy_action == BasePlayer.ROCK:
-                return Playground.REWARD_DRAW
-            elif enemy_action == BasePlayer.PAPER:
-                return Playground.REWARD_LOSE
-            else:
-                return Playground.REWARD_WIN
-        elif my_action == BasePlayer.PAPER:
-            if enemy_action == BasePlayer.PAPER:
-                return Playground.REWARD_DRAW
-            elif enemy_action == BasePlayer.SCISSORS:
-                return Playground.REWARD_LOSE
-            else:
-                return Playground.REWARD_WIN
-        else:
-            if enemy_action == BasePlayer.SCISSORS:
-                return Playground.REWARD_DRAW
-            elif enemy_action == BasePlayer.ROCK:
-                return Playground.REWARD_LOSE
-            else:
-                return Playground.REWARD_WIN
+        return int(self.model.predict(observation))
 
-    @staticmethod
-    def eval_done(my_action, enemy_action):
-        """
-        自分の手と相手の手から勝敗が決定したかどうか
-        を返却する（エピソード完の返却）。
-        引数：
-            my_action       自分の行動
-            enemy_action    敵の行動
-        戻り値：
-            done            エピソード完（真：完了、偽：あいこ）
-        """
-        return False if my_action == enemy_action else True
+# テスト
 
-    @staticmethod
-    def init_observation(history_length=100):
-        """
-        観測データ初期値を作成する。
-        自分、敵両方の過去の手はすべてランダムに設定する。
-        引数：
-            history_length      履歴件数
-        戻り値：
-            観測データ（初期化された状態）
-        """
-        observation = []
-        for _ in range(2):
-            history = []
-            for _ in range(history_length):
-                history.append(random.randrange(len(BasePlayer.ALL_ACTION)))
-            observation.append(history)
-        return observation
+def test_observation():
+    env = RockPaperScissorsEnv(Player())
+    assert(len(env.observation)==100)
+    assert(len(env.observation[0])==2)
+    for i in range(100):
+        assert(env.observation[i][0] >= 0 and env.observation[i][0]<=2)
+        assert(env.observation[i][1] >= 0 and env.observation[i][1]<=2)
+    oldest_policy_action = env.observation[1][0]
+    oldest_env_action = env.observation[1][1]
+    newest_policy_action = 3
+    newest_env_action = 4
+    env.update_observation(env.observation, newest_policy_action, newest_env_action)
+    assert(env.observation[0][0]==oldest_policy_action)
+    assert(env.observation[0][1]==oldest_env_action)
+    assert(env.observation[99][0]==newest_policy_action)
+    assert(env.observation[99][1]==newest_env_action)
 
-    @staticmethod
-    def update_observation(observation, my_action, enemy_action):
-        """
-        観測データを更新する。
-        最古の行動を削除し、引数で与えられた行動を加える。
-        引数：
-            observation     観測データ（更新前）
-            my_action       最新の自分の行動
-            enemy_action    最新の敵の行動
-        戻り値：
-            observation     観測データ（更新後）
-        """
-        for i in range(len(observation)):
-            observation[i] = observation[i][-(len(observation[i]) - 1):]
-        observation[0].append(my_action)
-        observation[1].append(enemy_action)
-        return observation
+def test_is_done():
+    env = RockPaperScissorsEnv(Player())
+    assert(env.is_done(0, 0) == False)
+    assert(env.is_done(0, 1) == True)
+    assert(env.is_done(0, 2) == True)
+    assert(env.is_done(1, 0) == True)
+    assert(env.is_done(1, 1) == False)
+    assert(env.is_done(1, 2) == True)
+    assert(env.is_done(2, 0) == True)
+    assert(env.is_done(2, 1) == True)
+    assert(env.is_done(2, 2) == False)
 
-    @staticmethod
-    def reverse_observation(observation):
-        """
-        相手側の観測データに変換する。
-        引数：
-            observation         観測データ
-        戻り値：
-            reverse_observation 相手側の観測データ
-        """
-        reverse_observation = []
-        for history in reversed(observation):
-            reverse_observation.append(history)
-        return reverse_observation
+def test_calc_reward():
+    env = RockPaperScissorsEnv(Player())
+    for i in range(3):
+        assert(env.calc_reward(i, i)==-1)
+    assert(env.calc_reward(0, 1)==-10)
+    assert(env.calc_reward(0, 2)==10)
+    assert(env.calc_reward(1, 0)==10)
+    assert(env.calc_reward(1, 2)==-10)
+    assert(env.calc_reward(2, 0)==-10)
+    assert(env.calc_reward(2, 1)==10)
 
-
-def test_playground():
-    history_length=10
-    class TestPlayer:
-        def next_action(self, observation):
-            assert(len(observation) == 2)
-            for history in observation:
-                assert(len(history) == history_length)
-            return random.randrange(len(BasePlayer.ALL_ACTION))
-    enemy_player = TestPlayer()
-    env = Playground(enemy_player=enemy_player, max_steps=3, history_length=history_length)
-    observation = env.reset()
-    assert(observation == env.observation)
-    assert(observation == Playground.reverse_observation(
-        Playground.reverse_observation(env.observation)))
-    my_player = TestPlayer()
+def test_player():
+    player = Player()
+    prob_player = ProbPlayer(prob_list=[1, 7, 2])
+    prob_player_pa = ProbPlayer(prob_list=[0.0, 1.0, 0.0])
+    jurina_player = JurinaPlayer(action=1)
     for _ in range(100):
-        my_action = my_player.next_action(observation)
-        observation, reward, done, info = env.step(my_action)
-        env.render()
-        if done:
-            print(f'*** episode:{info["episode_no"]}, step:{info["step_no"]}, reward:{reward}')
-            assert(observation == env.reset())
+        assert(player.predict(None) in [0, 1, 2])
+        assert(prob_player.predict(None) in [0, 1, 2])
+        assert(prob_player_pa.predict(None)==1)
+        assert(jurina_player.predict(None)==1)
+
+def test_reset():
+    env = RockPaperScissorsEnv(ProbPlayer())
+    for _ in range(100):
+        assert(env.reset() == env.observation)
 
 if __name__ == '__main__':
-    #for _ in range(100):
-    #    print(random.randrange(len(BasePlayer.ALL_ACTION)))
-    test_playground()
+    test_observation()
+    test_is_done()
+    test_calc_reward()
+    test_player()
+    test_reset()

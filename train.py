@@ -6,122 +6,105 @@
 """
 import os
 import time
-try:
-    import gym
-except:
-    raise
-try:
-    from stable_baselines3.common.vec_env import DummyVecEnv
-    from stable_baselines3 import PPO
-    from stable_baselines3.common.monitor import Monitor
-except:
-    # Stable Baselines3(pytorch) がない場合、
-    # Stable Baselines(tensorflow) で代用
-    try:
-        from stable_baselines.common.vec_env import DummyVecEnv
-        from stable_baselines import PPO
-        from stable_baselines.bench import Monitor
-        from sim import WorkflowEnv
-    except:
-        # 両方ない場合は例外発生
-        raise
-try:
-    from agents import RandomPlayer, JurinaPlayer, ProbPlayer
-    from envs import Playground
-    from ppo import Mlp
-except:
-    raise
+import gym
 
-def train_mlp(enemy_player, model_path):
+from stable_baselines3.common.vec_env import DummyVecEnv
+from stable_baselines3 import PPO
+from stable_baselines3.common.monitor import Monitor
+
+from envs import RockPaperScissorsEnv, ProbPlayer, JurinaPlayer, AIPlayer
+
+LOGDIR = './logs'
+os.makedirs(LOGDIR, exist_ok=True)
+
+
+def train_prob_ppo(path='prob_ppo'):
     """
-    方策としてMlpPolicyを指定してじゃんけん対戦環境下で
-    トレーニングを実行する。
+    1/3の確率で出を出す環境での学習を行う。
     引数：
-        enemy_player        敵プレイヤー
-        model_path          モデルファイルパス
+        path    学習済みモデルファイルパス
     戻り値：
         なし
     """
-    # ログディレクトリの作成
-    os.makedirs(Mlp.LOGDIR, exist_ok=True)
-    # 環境の構築
-    env = Playground(enemy_player)
-    env = Monitor(env, Mlp.LOGDIR, allow_early_resets=True)
+    print(f'train ppo with prob_player path={path}')
+    # じゃんけん環境の構築
+    env = RockPaperScissorsEnv(ProbPlayer())
+    env = Monitor(env, LOGDIR, allow_early_resets=True)
     env = DummyVecEnv([lambda: env])
 
-    # 未学習モデルの準備
-    model = Mlp.new_model(env, verbose=1)
+    # PPOモデルの初期化
+    model = PPO('MlpPolicy', env, verbose=1)
 
     # トレーニング実行
-    model.learn(total_timesteps=100000)
+    elapsed = time.time()
+    model.learn(total_timesteps=1000000)
+    print(f'elapse time: {time.time() - elapsed}msec')
 
     # 学習済みモデルの保存
-    model.save(model_path)
+    model.save(path)
 
-    # 環境のクローズ
+    # じゃんけん環境のクローズ
     env.close()
 
-def fine_tuning_mlp(enemy_player, new_model_path, org_model_path):
+def train_pa_ppo(path='pa_ppo'):
     """
-    学習済みモデルに別の環境をセットしてファインチューニングを
-    実行する。
+    1/3の確率で出を出す環境での学習を行う。
     引数：
-        enemy_player        新たな敵プレイヤー
-        new_model_path      新規モデルファイルパス
-        org_model_path      学習済みモデルファイルパス
+        path    学習済みモデルファイルパス
     戻り値：
         なし
     """
-    # ログディレクトリの作成
-    os.makedirs(Mlp.LOGDIR, exist_ok=True)
-    # 環境の構築
-    env = Playground(enemy_player)
-    env = Monitor(env, Mlp.LOGDIR, allow_early_resets=True)
+    print(f'train ppo with jurina_player path={path}')
+    # じゃんけん環境の構築
+    env = RockPaperScissorsEnv(JurinaPlayer())
+    env = Monitor(env, LOGDIR, allow_early_resets=True)
     env = DummyVecEnv([lambda: env])
 
-    # 学習済みモデルのロード
-    model = PPO.load(org_model_path)
-
-    # 環境のセット
-    model.set_env(env)
+    # PPOモデルの初期化
+    model = PPO('MlpPolicy', env, verbose=1)
 
     # トレーニング実行
-    model.learn(total_timesteps=100000)
+    elapsed = time.time()
+    model.learn(total_timesteps=1000000)
+    print(f'elapse time: {time.time() - elapsed}msec')
 
     # 学習済みモデルの保存
-    model.save(new_model_path)
+    model.save(path)
 
-    # 環境のクローズ
+    # じゃんけん環境のクローズ
+    env.close()
+
+def train_policy_ppo(path='policy_ppo', org_path='prob_ppo'):
+    """
+    学習済み方策をつかった環境を相手にトレーニングを行う
+    引数：
+        path        学習済みモデルファイルパス
+        org_path    学習元となる方策がロードする学習済みモデルファイルパス
+    """
+    print(f'train ppo with prob_player path={path}, org_path={org_path}')
+    # 学習済みモデルファイルのロード
+    model = PPO.load(org_path)
+    
+    # じゃんけん環境の構築
+    env = RockPaperScissorsEnv(AIPlayer(model))
+    env = Monitor(env, LOGDIR, allow_early_resets=True)
+    env = DummyVecEnv([lambda: env])
+
+    # トレーニング実行
+    elapsed = time.time()
+    model.learn(total_timesteps=1000000)
+    print(f'elapse time: {time.time() - elapsed}msec')
+
+    # 学習済みモデルの保存
+    model.save(path)
+
+    # じゃんけん環境のクローズ
     env.close()
 
 if __name__ == '__main__':
     """
-    RandomPlayer, ProbPlayer, JurinaPlayer を敵として
     各々トレーニング実行する。
     """
-
-    print('start training against random player')
-    start_time = time.time()
-    train_mlp(RandomPlayer(), Mlp.PATH + '_random')
-    term = time.time() - start_time
-    print(f'end training against random player: elapsed time = {term}sec.')
-
-    prob_list = [0.33, 0.33, 0.34]
-    print(f'start training against prob player({prob_list})')
-    start_time = time.time()
-    train_mlp(ProbPlayer(prob_list), Mlp.PATH + '_prob')
-    term = time.time() - start_time
-    print(f'end training against prob player: elapsed time = {term}sec.')
-
-    print('start training against jurina player')
-    start_time = time.time()
-    train_mlp(JurinaPlayer(), Mlp.PATH + '_jurina')
-    term = time.time() - start_time
-    print(f'end training against jurina player: elapsed time = {term}sec.')
-
-    prob_list = [0.1, 0.5, 0.4]
-    print(f'start transfer training against prob player({prob_list})')
-    start_time = time.time()
-    fine_tuning_mlp(ProbPlayer(prob_list), Mlp.PATH + '_prob2', Mlp.PATH + '_random')
-    term = time.time() - start_time
-    print(f'end transfer training against prob player: elapsed time = {term}sec.')
+    train_prob_ppo()
+    train_pa_ppo()
+    train_policy_ppo()

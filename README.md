@@ -35,7 +35,7 @@
 
 学習済みモデルの平均報酬値を標準出力へ表示します。
 
-* python eval.py
+* `python eval.py`
 
 以下のグラフは、平均報酬値結果を実行し、まとめたものです。
 
@@ -50,7 +50,7 @@
 * `cd rock-paper-scissors`
 * `conda install flask`
 * `pip install docopt`
-* `python app.py`
+* `python server.py`
 
 停止はCtrl+Cを押します。
 
